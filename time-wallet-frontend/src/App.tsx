@@ -6,7 +6,7 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 
 // Pages
-import { Home } from "./components/Home";
+import { Home } from "./pages/Home";
 import { MyDeposits } from "./pages/MyDeposits";
 // import { CreateDeposit } from "./pages/CreateDeposit";
 // import { Analytics } from "./pages/Analytics";

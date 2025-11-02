@@ -1,28 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { PublicKey } from "@solana/web3.js";
-import * as anchor from "@coral-xyz/anchor";
 import { useTimeWalletProgram } from "./useTimeWalletProgram";
+import { Deposit } from "../types/deposit";
 
-export interface Deposit {
-  pubkey: PublicKey;
-  owner: PublicKey;
-  mint: PublicKey;
-  vaultTokenAccount: PublicKey;
-  amount: number;
-  lockCondition: {
-    unlockTimestamp: number;
-    unlockAmount: number;
-    conditionType: "ByTime" | "ByAmount";
-  };
-  state: "Active" | "Withdrawn";
-  createdAt: number;
-  bump: number;
-}
-
-export function useDeposits(autoRefresh: boolean = true) {
+export function useDeposits() {
   const { program, connection, wallet } = useTimeWalletProgram();
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const formatAmount = useCallback((amount: number, decimals = 9) => {
@@ -38,11 +22,15 @@ export function useDeposits(autoRefresh: boolean = true) {
   const fetchDeposits = useCallback(async () => {
     if (!program || !wallet?.publicKey) {
       setDeposits([]);
+      setError(null);
       return;
     }
 
     setLoading(true);
+    setError(null);
     try {
+      console.log("🔍 Fetching deposits for wallet:", wallet.publicKey.toBase58());
+      
       const accounts = await connection.getProgramAccounts(program.programId, {
         filters: [
           {
@@ -54,34 +42,67 @@ export function useDeposits(autoRefresh: boolean = true) {
         ],
       });
 
+      console.log(`📊 Found ${accounts.length} program accounts`);
+
       const coder = program.coder.accounts;
       const parsed: Deposit[] = [];
 
       for (const acc of accounts) {
         try {
+          // Пробуем декодировать как депозит
           const decoded = coder.decode("timeLockDeposit", acc.account.data);
-          parsed.push({
+          
+          console.log("✅ Successfully decoded deposit:", {
+            pubkey: acc.pubkey.toBase58(),
+            amount: decoded.amount.toString(),
+            mint: decoded.mint.toBase58(),
+            state: decoded.state,
+            conditionType: decoded.lockCondition.conditionType
+          });
+
+          // Определяем тип условия на основе структуры Rust
+          let conditionType: "ByTime" | "ByAmount" = "ByTime";
+          if (decoded.lockCondition.conditionType && 
+              typeof decoded.lockCondition.conditionType === 'object') {
+            if ('byAmount' in decoded.lockCondition.conditionType) {
+              conditionType = "ByAmount";
+            } else if ('byTime' in decoded.lockCondition.conditionType) {
+              conditionType = "ByTime";
+            }
+          }
+
+          // Определяем состояние
+          let state: "Active" | "Withdrawn" = "Active";
+          if (decoded.state && typeof decoded.state === 'object') {
+            if ('withdrawn' in decoded.state) {
+              state = "Withdrawn";
+            } else if ('active' in decoded.state) {
+              state = "Active";
+            }
+          }
+
+          const deposit: Deposit = {
             pubkey: acc.pubkey,
-            owner: decoded.owner,
-            mint: decoded.mint,
-            vaultTokenAccount: decoded.vaultTokenAccount,
             amount: Number(decoded.amount),
+            mint: decoded.mint.toBase58(),
+            state,
             lockCondition: {
+              conditionType,
               unlockTimestamp: Number(decoded.lockCondition.unlockTimestamp),
               unlockAmount: Number(decoded.lockCondition.unlockAmount),
-              conditionType:
-                decoded.lockCondition.conditionType?.ByTime === undefined
-                  ? "ByAmount"
-                  : "ByTime",
             },
-            state: decoded.state?.Active ? "Active" : "Withdrawn",
             createdAt: Number(decoded.createdAt),
-            bump: decoded.bump,
-          });
+          };
+
+          parsed.push(deposit);
         } catch (err) {
-          console.warn("Failed to decode deposit:", err);
+          // Игнорируем аккаунты, которые не являются депозитами
+          console.log("❌ Skipping non-deposit account:", acc.pubkey.toBase58());
+          continue;
         }
       }
+
+      console.log(`🎯 Successfully parsed ${parsed.length} deposits`);
 
       // Сортировка: активные сверху, потом по дате создания
       parsed.sort((a, b) => {
@@ -92,22 +113,19 @@ export function useDeposits(autoRefresh: boolean = true) {
 
       setDeposits(parsed);
       setLastUpdated(new Date());
-      console.log("✅ Deposits fetched:", parsed);
+      
     } catch (err) {
-      console.error("Error fetching deposits:", err);
+      console.error("❌ Error fetching deposits:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch deposits");
     } finally {
       setLoading(false);
     }
   }, [program, connection, wallet]);
 
-  // Автообновление каждые 15 сек
+  // Только при монтировании и при изменении зависимостей
   useEffect(() => {
     fetchDeposits();
-    if (!autoRefresh) return;
-
-    const interval = setInterval(fetchDeposits, 15000);
-    return () => clearInterval(interval);
-  }, [fetchDeposits, autoRefresh]);
+  }, [fetchDeposits]);
 
   const activeDeposits = deposits.filter((d) => d.state === "Active");
   const withdrawnDeposits = deposits.filter((d) => d.state === "Withdrawn");
@@ -117,6 +135,7 @@ export function useDeposits(autoRefresh: boolean = true) {
     activeDeposits,
     withdrawnDeposits,
     loading,
+    error,
     refetch: fetchDeposits,
     lastUpdated,
     formatAmount,

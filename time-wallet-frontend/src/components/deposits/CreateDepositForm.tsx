@@ -1,8 +1,15 @@
-// components/CreateDepositForm.tsx
 import React, { useState, useMemo } from 'react';
-import { useCreateDeposit } from '../hooks/useCreateDeposit';
+import { useCreateDeposit } from '../../hooks/useCreateDeposit';
+import { FaTimes } from 'react-icons/fa';
 
-export const CreateDepositForm: React.FC = () => {
+// Временное решение для иконки
+const TimesIcon = FaTimes as React.ComponentType<{}>;
+
+interface CreateDepositFormProps {
+  onClose: () => void; // 👈 ДОБАВЬТЕ ЭТОТ ПРОП
+}
+
+export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose }) => {
   const { 
     createTimeDeposit, 
     createAmountDeposit, 
@@ -10,7 +17,7 @@ export const CreateDepositForm: React.FC = () => {
     error,
     userTokens,
     toMinimalUnits,
-    fromMinimalUnits, // 👈 ДОБАВЬ ЭТУ ФУНКЦИЮ
+    fromMinimalUnits,
     isValidTimeDeposit,
     isValidAmountDeposit
   } = useCreateDeposit();
@@ -23,20 +30,6 @@ export const CreateDepositForm: React.FC = () => {
   const selectedTokenInfo = useMemo(() => {
     return userTokens.find(token => token.mint.toBase58() === selectedToken);
   }, [userTokens, selectedToken]);
-
-  // 👇 ДОБАВЬ ОТЛАДКУ ДЛЯ ДИАГНОСТИКИ
-  console.log('🔍 Form state:', {
-    selectedToken,
-    amount,
-    unlockValue,
-    depositType,
-    selectedTokenInfo: selectedTokenInfo ? {
-      symbol: selectedTokenInfo.symbol,
-      balance: selectedTokenInfo.balance,
-      decimals: selectedTokenInfo.decimals,
-      humanBalance: fromMinimalUnits ? fromMinimalUnits(selectedTokenInfo.balance, selectedTokenInfo.decimals) : 'N/A'
-    } : 'No token selected'
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,86 +110,98 @@ export const CreateDepositForm: React.FC = () => {
       }
       
       alert('Deposit created successfully!');
-      // Сброс формы
+      // Сброс формы и закрытие
       setAmount('');
       setUnlockValue('');
+      onClose(); // 👈 ВЫЗОВИТЕ onClose ПОСЛЕ УСПЕХА
     } catch (err) {
       console.error('Error creating deposit:', err);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label>Deposit Type:</label>
-        <select 
-          value={depositType} 
-          onChange={(e) => setDepositType(e.target.value as 'time' | 'amount')}
+    <div className="form-container">
+      <div className="form-header">
+        <h2>Create Deposit</h2>
+        <button
+          className="close-button"
+          onClick={onClose} // 👈 ИСПОЛЬЗУЙТЕ onClose ЗДЕСЬ
         >
-          <option value="time">Time Lock</option>
-          <option value="amount">Amount Lock</option>
-        </select>
+          <TimesIcon />
+        </button>
       </div>
-
-      <div>
-        <label>Token:</label>
-        <select 
-          value={selectedToken} 
-          onChange={(e) => setSelectedToken(e.target.value)}
-        >
-          <option value="">Select Token</option>
-          {userTokens.map(token => (
-            <option key={token.mint.toBase58()} value={token.mint.toBase58()}>
-              {/* ✅ ПРАВИЛЬНО - конвертируем ИЗ минимальных единиц */}
-              {token.symbol} - Balance: {fromMinimalUnits ? fromMinimalUnits(token.balance, token.decimals) : token.balance}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label>Amount:</label>
-        <input
-          type="number"
-          step="0.000001"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Enter amount"
-        />
-        {selectedTokenInfo && (
-          <div style={{ fontSize: '12px', color: '#666' }}>
-            Available: {fromMinimalUnits(selectedTokenInfo.balance, selectedTokenInfo.decimals)} {selectedTokenInfo.symbol}
-          </div>
-        )}
-      </div>
-
-      {depositType === 'time' ? (
+      
+      <form onSubmit={handleSubmit}>
         <div>
-          <label>Unlock Date:</label>
-          <input
-            type="datetime-local"
-            value={unlockValue}
-            onChange={(e) => setUnlockValue(e.target.value)}
-          />
+          <label>Deposit Type:</label>
+          <select 
+            value={depositType} 
+            onChange={(e) => setDepositType(e.target.value as 'time' | 'amount')}
+          >
+            <option value="time">Time Lock</option>
+            <option value="amount">Amount Lock</option>
+          </select>
         </div>
-      ) : (
+
         <div>
-          <label>Target Amount:</label>
+          <label>Token:</label>
+          <select 
+            value={selectedToken} 
+            onChange={(e) => setSelectedToken(e.target.value)}
+          >
+            <option value="">Select Token</option>
+            {userTokens.map(token => (
+              <option key={token.mint.toBase58()} value={token.mint.toBase58()}>
+                {token.symbol} - Balance: {fromMinimalUnits ? fromMinimalUnits(token.balance, token.decimals) : token.balance}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label>Amount:</label>
           <input
             type="number"
             step="0.000001"
-            value={unlockValue}
-            onChange={(e) => setUnlockValue(e.target.value)}
-            placeholder="Enter target amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="Enter amount"
           />
+          {selectedTokenInfo && (
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              Available: {fromMinimalUnits(selectedTokenInfo.balance, selectedTokenInfo.decimals)} {selectedTokenInfo.symbol}
+            </div>
+          )}
         </div>
-      )}
 
-      <button type="submit" disabled={loading || !selectedTokenInfo}>
-        {loading ? 'Creating Deposit...' : 'Create Deposit'}
-      </button>
+        {depositType === 'time' ? (
+          <div>
+            <label>Unlock Date:</label>
+            <input
+              type="datetime-local"
+              value={unlockValue}
+              onChange={(e) => setUnlockValue(e.target.value)}
+            />
+          </div>
+        ) : (
+          <div>
+            <label>Target Amount:</label>
+            <input
+              type="number"
+              step="0.000001"
+              value={unlockValue}
+              onChange={(e) => setUnlockValue(e.target.value)}
+              placeholder="Enter target amount"
+            />
+          </div>
+        )}
 
-      {error && <div style={{ color: 'red' }}>Error: {error}</div>}
-    </form>
+        <button type="submit" disabled={loading || !selectedTokenInfo}>
+          {loading ? 'Creating Deposit...' : 'Create Deposit'}
+        </button>
+
+        {error && <div style={{ color: 'red' }}>Error: {error}</div>}
+      </form>
+    </div>
   );
 };
