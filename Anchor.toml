@@ -7,7 +7,7 @@ skip-lint = false
 
 # ДОБАВЬ СЕКЦИЮ ДЛЯ DEVNET:
 [programs.devnet]
-timelock_wallet = "CPPQFeBovJRCeLQ1Kh7HAX9qQMszh42XMBMpHMrrXBkD"
+timelock_wallet = "DDQBPrEG2Jwryji26VBYZxzXHtUvS8kBqucGS86MoqJU"
 
 # ОСТАВЬ localnet для тестов:
 [programs.localnet]

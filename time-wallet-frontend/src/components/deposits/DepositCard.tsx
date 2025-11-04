@@ -1,89 +1,127 @@
-import React from "react";
+import React, { useState } from "react";
 import { Deposit } from "../../types/deposit";
 import { formatAmount, formatDate, getTokenSymbol } from "../../utils/formatters";
 
 interface DepositCardProps {
   deposit: Deposit;
+  onWithdraw: (deposit: Deposit) => Promise<void>;
+  onTopUp: (deposit: Deposit, amount: number) => Promise<void>;
 }
 
-export const DepositCard: React.FC<DepositCardProps> = ({ deposit }) => {
-  const canWithdraw = (deposit: Deposit): boolean => {
+export const DepositCard: React.FC<DepositCardProps> = ({ deposit, onWithdraw, onTopUp }) => {
+  const [loading, setLoading] = useState(false);
+
+  const canWithdraw = (): boolean => {
     if (deposit.state === "Withdrawn") return false;
     const now = Math.floor(Date.now() / 1000);
-    
     if (deposit.lockCondition.conditionType === "ByTime") {
       return now >= (deposit.lockCondition.unlockTimestamp || 0);
-    } else {
-      return deposit.amount >= (deposit.lockCondition.unlockAmount || 0);
+    }
+    return deposit.amount >= (deposit.lockCondition.unlockAmount || 0);
+  };
+
+  const statusText = deposit.state === "Withdrawn"
+    ? "Withdrawn"
+    : canWithdraw()
+    ? "Ready to Withdraw"
+    : "Active";
+
+  const statusClass =
+    deposit.state === "Withdrawn"
+      ? "status-withdrawn"
+      : canWithdraw()
+      ? "status-ready"
+      : "status-active";
+
+  const handleWithdraw = async () => {
+    setLoading(true);
+    try {
+      await onWithdraw(deposit);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusColor = (deposit: Deposit): string => {
-    if (deposit.state === "Withdrawn") return "text-gray-500";
-    if (canWithdraw(deposit)) return "text-green-500";
-    return "text-yellow-500";
-  };
-
-  const getStatusText = (deposit: Deposit): string => {
-    if (deposit.state === "Withdrawn") return "Withdrawn";
-    if (canWithdraw(deposit)) return "Ready to Withdraw";
-    return "Active";
+  const handleTopUp = async () => {
+    const amountStr = prompt("Enter amount to top-up:");
+    if (!amountStr) return;
+    const amount = Number(amountStr);
+    if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
+    setLoading(true);
+    try {
+      await onTopUp(deposit, amount);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex justify-between items-start mb-3">
+    <div className="deposit-card">
+      <div className="deposit-header">
         <div>
-          <h3 className="font-semibold text-lg">
+          <div className="deposit-title">
             {getTokenSymbol(deposit.mint)} Deposit
-          </h3>
-          <p className="text-sm text-gray-500">
-            {deposit.pubkey.toBase58().slice(0, 8)}...{deposit.pubkey.toBase58().slice(-8)}
-          </p>
+          </div>
+          <div className="deposit-subkey">
+            {deposit.pubkey.toBase58().slice(0, 8)}...
+            {deposit.pubkey.toBase58().slice(-8)}
+          </div>
         </div>
-        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(deposit)}`}>
-          {getStatusText(deposit)}
-        </span>
+        <span className={`status-badge ${statusClass}`}>{statusText}</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="deposit-info-grid">
         <div>
-          <p className="text-gray-600">Amount</p>
-          <p className="font-semibold">{formatAmount(deposit.amount)} {getTokenSymbol(deposit.mint)}</p>
+          <div className="deposit-info-label">Amount</div>
+          <div className="deposit-info-value">
+            {formatAmount(deposit.amount)} {getTokenSymbol(deposit.mint)}
+          </div>
         </div>
-        
         <div>
-          <p className="text-gray-600">Condition</p>
-          <p className="font-semibold">
-            {deposit.lockCondition.conditionType === "ByTime" ? "Time Lock" : "Amount Lock"}
-          </p>
+          <div className="deposit-info-label">Condition</div>
+          <div className="deposit-info-value">
+            {deposit.lockCondition.conditionType === "ByTime"
+              ? "Time Lock"
+              : "Amount Lock"}
+          </div>
         </div>
-
         <div>
-          <p className="text-gray-600">
-            {deposit.lockCondition.conditionType === "ByTime" ? "Unlocks At" : "Target Amount"}
-          </p>
-          <p className="font-semibold">
-            {deposit.lockCondition.conditionType === "ByTime" 
+          <div className="deposit-info-label">
+            {deposit.lockCondition.conditionType === "ByTime"
+              ? "Unlocks At"
+              : "Target Amount"}
+          </div>
+          <div className="deposit-info-value">
+            {deposit.lockCondition.conditionType === "ByTime"
               ? formatDate(deposit.lockCondition.unlockTimestamp || 0)
-              : formatAmount(deposit.lockCondition.unlockAmount || 0)
-            }
-          </p>
+              : formatAmount(deposit.lockCondition.unlockAmount || 0)}
+          </div>
         </div>
-
         <div>
-          <p className="text-gray-600">Created</p>
-          <p className="font-semibold">{formatDate(deposit.createdAt)}</p>
+          <div className="deposit-info-label">Created</div>
+          <div className="deposit-info-value">{formatDate(deposit.createdAt)}</div>
         </div>
       </div>
 
-      {canWithdraw(deposit) && (
-        <div className="mt-4">
-          <button className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors">
-            Withdraw Funds
+      <div className="deposit-actions">
+        {canWithdraw() ? (
+          <button
+            disabled={loading}
+            onClick={handleWithdraw}
+            className="deposit-button green"
+          >
+            {loading ? "Processing..." : "Withdraw Funds"}
           </button>
-        </div>
-      )}
+        ) : (
+          <button
+            disabled={loading}
+            onClick={handleTopUp}
+            className="deposit-button blue"
+          >
+            {loading ? "Processing..." : "Top-up Deposit"}
+          </button>
+        )}
+      </div>
     </div>
   );
 };

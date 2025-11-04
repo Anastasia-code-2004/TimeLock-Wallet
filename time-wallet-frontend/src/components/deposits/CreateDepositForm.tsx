@@ -1,76 +1,59 @@
-import React, { useState, useMemo } from 'react';
-import { useCreateDeposit } from '../../hooks/useCreateDeposit';
-import { FaTimes } from 'react-icons/fa';
+import React, { useState, useMemo } from "react";
+import { useCreateDeposit } from "../../hooks/useCreateDeposit";
+import { FaTimes } from "react-icons/fa";
 
-// Временное решение для иконки
 const TimesIcon = FaTimes as React.ComponentType<{}>;
 
 interface CreateDepositFormProps {
-  onClose: () => void; // 👈 ДОБАВЬТЕ ЭТОТ ПРОП
+  onClose: () => void;
 }
 
 export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose }) => {
-  const { 
-    createTimeDeposit, 
-    createAmountDeposit, 
-    loading, 
+  const {
+    createTimeDeposit,
+    createAmountDeposit,
+    loading,
     error,
     userTokens,
     toMinimalUnits,
     fromMinimalUnits,
     isValidTimeDeposit,
-    isValidAmountDeposit
+    isValidAmountDeposit,
   } = useCreateDeposit();
 
-  const [depositType, setDepositType] = useState<'time' | 'amount'>('time');
-  const [selectedToken, setSelectedToken] = useState('');
-  const [amount, setAmount] = useState('');
-  const [unlockValue, setUnlockValue] = useState('');
+  const [depositType, setDepositType] = useState<"time" | "amount">("time");
+  const [selectedToken, setSelectedToken] = useState("");
+  const [amount, setAmount] = useState("");
+  const [unlockValue, setUnlockValue] = useState("");
 
-  const selectedTokenInfo = useMemo(() => {
-    return userTokens.find(token => token.mint.toBase58() === selectedToken);
-  }, [userTokens, selectedToken]);
+  const selectedTokenInfo = useMemo(
+    () => userTokens.find((token) => token.mint.toBase58() === selectedToken),
+    [userTokens, selectedToken]
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedTokenInfo) {
-      console.log('❌ No token selected');
+      alert("Please select a token");
       return;
     }
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      console.log('❌ Invalid amount:', amount);
-      alert('Please enter a valid amount');
+      alert("Please enter a valid amount");
       return;
     }
 
-    const amountInMinimalUnits = toMinimalUnits(
-      amountNum, 
-      selectedTokenInfo.decimals
-    );
-
-    console.log('🔍 Creating deposit:', {
-      amountNum,
-      amountInMinimalUnits,
-      tokenBalance: selectedTokenInfo.balance,
-      hasEnoughBalance: amountInMinimalUnits <= selectedTokenInfo.balance
-    });
+    const amountInMinimalUnits = toMinimalUnits(amountNum, selectedTokenInfo.decimals);
 
     try {
-      if (depositType === 'time') {
+      if (depositType === "time") {
         const unlockTimestamp = Math.floor(new Date(unlockValue).getTime() / 1000);
         const now = Math.floor(Date.now() / 1000);
-        
-        console.log('🔍 Time deposit validation:', {
-          unlockTimestamp,
-          now,
-          isFuture: unlockTimestamp > now
-        });
-        
+
         if (!isValidTimeDeposit(selectedTokenInfo.mint, amountInMinimalUnits, unlockTimestamp)) {
-          alert('Invalid parameters: Please check that unlock date is in the future and you have sufficient balance');
+          alert("Invalid parameters: check future date and balance");
           return;
         }
 
@@ -82,7 +65,7 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
       } else {
         const unlockAmountNum = parseFloat(unlockValue);
         if (isNaN(unlockAmountNum) || unlockAmountNum <= 0) {
-          alert('Please enter a valid target amount');
+          alert("Please enter a valid target amount");
           return;
         }
 
@@ -91,14 +74,14 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
           selectedTokenInfo.decimals
         );
 
-        console.log('🔍 Amount deposit validation:', {
-          unlockAmountNum,
-          unlockAmountInMinimalUnits,
-          amountInMinimalUnits
-        });
-
-        if (!isValidAmountDeposit(selectedTokenInfo.mint, amountInMinimalUnits, unlockAmountInMinimalUnits)) {
-          alert('Invalid parameters: Please check that target amount is valid and you have sufficient balance');
+        if (
+          !isValidAmountDeposit(
+            selectedTokenInfo.mint,
+            amountInMinimalUnits,
+            unlockAmountInMinimalUnits
+          )
+        ) {
+          alert("Invalid parameters: check amount and balance");
           return;
         }
 
@@ -108,58 +91,54 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
           unlockAmount: unlockAmountInMinimalUnits,
         });
       }
-      
-      alert('Deposit created successfully!');
-      // Сброс формы и закрытие
-      setAmount('');
-      setUnlockValue('');
-      onClose(); // 👈 ВЫЗОВИТЕ onClose ПОСЛЕ УСПЕХА
+
+      alert("✅ Deposit created successfully!");
+      setAmount("");
+      setUnlockValue("");
+      onClose();
     } catch (err) {
-      console.error('Error creating deposit:', err);
+      console.error("Error creating deposit:", err);
     }
   };
 
   return (
-    <div className="form-container">
-      <div className="form-header">
+    <div className="deposit-form-container">
+      <div className="deposit-form-header">
         <h2>Create Deposit</h2>
-        <button
-          className="close-button"
-          onClick={onClose} // 👈 ИСПОЛЬЗУЙТЕ onClose ЗДЕСЬ
-        >
+        <button className="deposit-close-button" onClick={onClose}>
           <TimesIcon />
         </button>
       </div>
-      
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Deposit Type:</label>
-          <select 
-            value={depositType} 
-            onChange={(e) => setDepositType(e.target.value as 'time' | 'amount')}
+
+      <form onSubmit={handleSubmit} className="deposit-form">
+        <div className="form-group">
+          <label>Deposit Type</label>
+          <select
+            value={depositType}
+            onChange={(e) => setDepositType(e.target.value as "time" | "amount")}
           >
             <option value="time">Time Lock</option>
             <option value="amount">Amount Lock</option>
           </select>
         </div>
 
-        <div>
-          <label>Token:</label>
-          <select 
-            value={selectedToken} 
-            onChange={(e) => setSelectedToken(e.target.value)}
-          >
+        <div className="form-group">
+          <label>Token</label>
+          <select value={selectedToken} onChange={(e) => setSelectedToken(e.target.value)}>
             <option value="">Select Token</option>
-            {userTokens.map(token => (
+            {userTokens.map((token) => (
               <option key={token.mint.toBase58()} value={token.mint.toBase58()}>
-                {token.symbol} - Balance: {fromMinimalUnits ? fromMinimalUnits(token.balance, token.decimals) : token.balance}
+                {token.symbol} — Balance:{" "}
+                {fromMinimalUnits
+                  ? fromMinimalUnits(token.balance, token.decimals)
+                  : token.balance}
               </option>
             ))}
           </select>
         </div>
 
-        <div>
-          <label>Amount:</label>
+        <div className="form-group">
+          <label>Amount</label>
           <input
             type="number"
             step="0.000001"
@@ -168,15 +147,17 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
             placeholder="Enter amount"
           />
           {selectedTokenInfo && (
-            <div style={{ fontSize: '12px', color: '#666' }}>
-              Available: {fromMinimalUnits(selectedTokenInfo.balance, selectedTokenInfo.decimals)} {selectedTokenInfo.symbol}
+            <div className="hint-text">
+              Available:{" "}
+              {fromMinimalUnits(selectedTokenInfo.balance, selectedTokenInfo.decimals)}{" "}
+              {selectedTokenInfo.symbol}
             </div>
           )}
         </div>
 
-        {depositType === 'time' ? (
-          <div>
-            <label>Unlock Date:</label>
+        {depositType === "time" ? (
+          <div className="form-group">
+            <label>Unlock Date</label>
             <input
               type="datetime-local"
               value={unlockValue}
@@ -184,8 +165,8 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
             />
           </div>
         ) : (
-          <div>
-            <label>Target Amount:</label>
+          <div className="form-group">
+            <label>Target Amount</label>
             <input
               type="number"
               step="0.000001"
@@ -196,11 +177,11 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
           </div>
         )}
 
-        <button type="submit" disabled={loading || !selectedTokenInfo}>
-          {loading ? 'Creating Deposit...' : 'Create Deposit'}
+        <button type="submit" disabled={loading || !selectedTokenInfo} className="submit-button">
+          {loading ? "Creating..." : "Create Deposit"}
         </button>
 
-        {error && <div style={{ color: 'red' }}>Error: {error}</div>}
+        {error && <div className="error-message">❌ {error}</div>}
       </form>
     </div>
   );

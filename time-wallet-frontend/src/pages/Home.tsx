@@ -4,6 +4,7 @@ import { useTimeWalletProgram } from "../hooks/useTimeWalletProgram";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { CreateDepositForm } from "../components/deposits/CreateDepositForm";
 import { FaLock, FaWallet, FaDatabase, FaHistory, FaChartLine } from "react-icons/fa";
+import { Analytics } from "./Analytics";
 
 // Временные решения для иконок
 const LockIcon = FaLock as React.ComponentType<{ size?: number; color?: string }>;
@@ -69,7 +70,10 @@ export const Home: React.FC = () => {
               <p>View and manage your active deposits</p>
             </button>
 
-            <button className="action-card">
+            <button
+              className="action-card"
+              onClick={() => navigate("/analytics")} // <-- переход на страницу Analytics
+            >
               <div className="action-icon">
                 <ChartLineIcon size={28} />
               </div>

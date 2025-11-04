@@ -7,6 +7,7 @@ export interface Deposit {
   state: "Active" | "Withdrawn";
   lockCondition: LockCondition;
   createdAt: number;
+  vault_token_account: string;
 }
 
 export interface LockCondition {
