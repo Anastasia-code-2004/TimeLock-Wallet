@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
@@ -11,14 +11,14 @@ import { useUserTokens } from "./useUserTokens";
 
 export interface CreateTimeDepositParams {
   mint: PublicKey;
-  amount: number; // уже в минимальных единицах
+  amount: number;
   unlockTimestamp: number;
 }
 
 export interface CreateAmountDepositParams {
   mint: PublicKey;
-  amount: number; // уже в минимальных единицах
-  unlockAmount: number; // тоже в минимальных единицах
+  amount: number;
+  unlockAmount: number;
 }
 
 export function useCreateDeposit() {
@@ -26,8 +26,8 @@ export function useCreateDeposit() {
   const { tokens } = useUserTokens();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const depositCounter = useRef(0);
 
-  /** Проверка баланса */
   const hasSufficientBalance = useCallback(
     (mint: PublicKey, amount: number) => {
       const token = tokens.find((t) => t.mint.equals(mint));
@@ -43,7 +43,6 @@ export function useCreateDeposit() {
     [tokens]
   );
 
-  /** Конвертация */
   const toMinimalUnits = useCallback((amount: number, decimals: number) => {
     const minimal = Math.floor(amount * 10 ** decimals);
     console.log(`🔢 Converting to minimal units: ${amount} -> ${minimal}`);
@@ -56,7 +55,6 @@ export function useCreateDeposit() {
     return human;
   }, []);
 
-  /** Создание ATA */
   const ensureUserTokenAccount = useCallback(
     async (mint: PublicKey, owner: PublicKey) => {
       if (!program) throw new Error("Program not initialized");
@@ -82,134 +80,162 @@ export function useCreateDeposit() {
     [program]
   );
 
-  /** Создание Time Deposit */
   const createTimeDeposit = useCallback(
-    async ({ mint, amount, unlockTimestamp }: CreateTimeDepositParams) => {
-      if (!program || !wallet?.publicKey) throw new Error("Wallet not connected");
-      if (!hasSufficientBalance(mint, amount)) throw new Error("Insufficient balance");
+  async ({ mint, amount, unlockTimestamp }: CreateTimeDepositParams) => {
+    if (!program || !wallet?.publicKey) throw new Error("Wallet not connected");
+    if (!hasSufficientBalance(mint, amount)) throw new Error("Insufficient balance");
 
-      setLoading(true);
-      setError(null);
-      console.log("📝 Creating Time Deposit:", { mint: mint.toBase58(), amount, unlockTimestamp });
+    setLoading(true);
+    setError(null);
+    console.log("📝 Creating Time Deposit:", { mint: mint.toBase58(), amount, unlockTimestamp });
 
-      try {
-        const provider = program.provider as anchor.AnchorProvider;
+    try {
+      const provider = program.provider as anchor.AnchorProvider;
 
-        const [depositPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from("deposit"), wallet.publicKey.toBuffer(), new anchor.BN(unlockTimestamp).toArrayLike(Buffer, "le", 8)],
-          program.programId
-        );
-        const [vaultPda] = PublicKey.findProgramAddressSync([Buffer.from("vault"), depositPda.toBuffer()], program.programId);
+      // 🔥 ДОБАВЛЯЕМ СЛУЧАЙНЫЙ COUNTER ДЛЯ TIME DEPOSIT ТОЖЕ
+      const counter = Math.floor(Math.random() * 1000000) + 1;
+      
+      console.log("🎲 Using random counter for Time Deposit:", counter);
 
-        console.log("📦 Deposit PDA:", depositPda.toBase58(), "Vault PDA:", vaultPda.toBase58());
+      const [depositPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("deposit"), 
+          wallet.publicKey.toBuffer(), 
+          new anchor.BN(unlockTimestamp).toArrayLike(Buffer, "le", 8),
+          new anchor.BN(counter).toArrayLike(Buffer, "le", 4) // ← ДОБАВЛЯЕМ COUNTER
+        ],
+        program.programId
+      );
 
-        const ownerTokenAccount = await ensureUserTokenAccount(mint, wallet.publicKey);
+      const [vaultPda] = PublicKey.findProgramAddressSync([Buffer.from("vault"), depositPda.toBuffer()], program.programId);
 
-        const tx = await program.methods
-          .initializeDeposit(new anchor.BN(amount), new anchor.BN(unlockTimestamp))
-          .accounts({
-            owner: wallet.publicKey,
-            deposit: depositPda,
-            mint,
-            ownerTokenAccount,
-            vaultTokenAccount: vaultPda,
-            systemProgram: SystemProgram.programId,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-          })
-          .transaction();
+      console.log("📦 Deposit PDA:", depositPda.toBase58(), "Vault PDA:", vaultPda.toBase58());
+      console.log("🔢 Using counter:", counter);
 
-        tx.feePayer = wallet.publicKey;
-        const latest = await provider.connection.getLatestBlockhash();
-        tx.recentBlockhash = latest.blockhash;
+      const ownerTokenAccount = await ensureUserTokenAccount(mint, wallet.publicKey);
 
-        console.log("✍ Signing transaction...");
-        const signedTx = await provider.wallet.signTransaction(tx);
-        const sig = await provider.connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: false });
-        console.log("🚀 Transaction sent, signature:", sig);
-        await provider.connection.confirmTransaction(sig, "confirmed");
-        console.log("✅ Time Deposit created successfully");
+      const tx = await program.methods
+        .initializeDeposit(
+          new anchor.BN(amount), 
+          new anchor.BN(unlockTimestamp),
+          new anchor.BN(counter) // ← ПЕРЕДАЕМ COUNTER
+        )
+        .accounts({
+          owner: wallet.publicKey,
+          deposit: depositPda,
+          mint,
+          ownerTokenAccount,
+          vaultTokenAccount: vaultPda,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        })
+        .transaction();
 
-        return { signature: sig, depositPda, vaultPda };
-      } catch (err: any) {
-        console.error("❌ Error creating Time Deposit:", err);
-        setError(err.message || "Failed to create time deposit");
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [program, wallet, hasSufficientBalance, ensureUserTokenAccount]
-  );
+      tx.feePayer = wallet.publicKey;
+      const latest = await provider.connection.getLatestBlockhash();
+      tx.recentBlockhash = latest.blockhash;
 
-  /** Создание Amount Deposit */
+      console.log("✍ Signing transaction...");
+      const signedTx = await provider.wallet.signTransaction(tx);
+      const sig = await provider.connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: false });
+      console.log("🚀 Transaction sent, signature:", sig);
+      await provider.connection.confirmTransaction(sig, "confirmed");
+      console.log("✅ Time Deposit created successfully");
+
+      return { signature: sig, depositPda, vaultPda };
+    } catch (err: any) {
+      console.error("❌ Error creating Time Deposit:", err);
+      setError(err.message || "Failed to create time deposit");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [program, wallet, hasSufficientBalance, ensureUserTokenAccount]
+);
+
   const createAmountDeposit = useCallback(
-    async ({ mint, amount, unlockAmount }: CreateAmountDepositParams) => {
-      if (!program || !wallet?.publicKey) throw new Error("Wallet not connected");
-      if (!hasSufficientBalance(mint, amount)) throw new Error("Insufficient balance");
+  async ({ mint, amount, unlockAmount }: CreateAmountDepositParams) => {
+    if (!program || !wallet?.publicKey) throw new Error("Wallet not connected");
+    if (!hasSufficientBalance(mint, amount)) throw new Error("Insufficient balance");
 
-      setLoading(true);
-      setError(null);
-      console.log("📝 Creating Amount Deposit:", { mint: mint.toBase58(), amount, unlockAmount });
+    setLoading(true);
+    setError(null);
+    console.log("📝 Creating Amount Deposit:", { mint: mint.toBase58(), amount, unlockAmount });
 
-      try {
-        const provider = program.provider as anchor.AnchorProvider;
+    try {
+      const provider = program.provider as anchor.AnchorProvider;
 
-        const [depositPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from("deposit"), wallet.publicKey.toBuffer(), new anchor.BN(unlockAmount).toArrayLike(Buffer, "le", 8)],
-          program.programId
-        );
-        const [vaultPda] = PublicKey.findProgramAddressSync([Buffer.from("vault"), depositPda.toBuffer()], program.programId);
+      // 🔥 ГЕНЕРИРУЕМ СЛУЧАЙНОЕ ЧИСЛО (от 1 до 1,000,000)
+      const counter = Math.floor(Math.random() * 1000000) + 1;
+      
+      console.log("🎲 Using random counter:", counter);
 
-        console.log("📦 Deposit PDA:", depositPda.toBase58(), "Vault PDA:", vaultPda.toBase58());
+      const [depositPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("deposit"), 
+          wallet.publicKey.toBuffer(), 
+          new anchor.BN(unlockAmount).toArrayLike(Buffer, "le", 8),
+          new anchor.BN(counter).toArrayLike(Buffer, "le", 4)
+        ],
+        program.programId
+      );
 
-        const ownerTokenAccount = await ensureUserTokenAccount(mint, wallet.publicKey);
+      const [vaultPda] = PublicKey.findProgramAddressSync([Buffer.from("vault"), depositPda.toBuffer()], program.programId);
 
-        const tx = await program.methods
-          .initializeDepositByAmount(new anchor.BN(amount), new anchor.BN(unlockAmount))
-          .accounts({
-            owner: wallet.publicKey,
-            deposit: depositPda,
-            mint,
-            ownerTokenAccount,
-            vaultTokenAccount: vaultPda,
-            systemProgram: SystemProgram.programId,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-          })
-          .transaction();
+      console.log("📦 Deposit PDA:", depositPda.toBase58(), "Vault PDA:", vaultPda.toBase58());
 
-        tx.feePayer = wallet.publicKey;
-        const latest = await provider.connection.getLatestBlockhash();
-        tx.recentBlockhash = latest.blockhash;
+      const ownerTokenAccount = await ensureUserTokenAccount(mint, wallet.publicKey);
 
-        console.log("✍ Signing transaction...");
-        const signedTx = await provider.wallet.signTransaction(tx);
-        const sig = await provider.connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: false });
-        console.log("🚀 Transaction sent, signature:", sig);
-        await provider.connection.confirmTransaction(sig, "confirmed");
-        console.log("✅ Amount Deposit created successfully");
+      const tx = await program.methods
+        .initializeDepositByAmount(
+          new anchor.BN(amount), 
+          new anchor.BN(unlockAmount), 
+          new anchor.BN(counter)
+        )
+        .accounts({
+          owner: wallet.publicKey,
+          deposit: depositPda,
+          mint,
+          ownerTokenAccount,
+          vaultTokenAccount: vaultPda,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        })
+        .transaction();
 
-        return { signature: sig, depositPda, vaultPda };
-      } catch (err: any) {
-        console.error("❌ Error creating Amount Deposit:", err);
-        setError(err.message || "Failed to create amount deposit");
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [program, wallet, hasSufficientBalance, ensureUserTokenAccount]
-  );
+      tx.feePayer = wallet.publicKey;
+      const latest = await provider.connection.getLatestBlockhash();
+      tx.recentBlockhash = latest.blockhash;
 
-  /** Top-up депозита */
+      console.log("✍ Signing transaction...");
+      const signedTx = await provider.wallet.signTransaction(tx);
+      const sig = await provider.connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: false });
+      console.log("🚀 Transaction sent, signature:", sig);
+      await provider.connection.confirmTransaction(sig, "confirmed");
+      console.log("✅ Amount Deposit created successfully");
+
+      return { signature: sig, depositPda, vaultPda };
+    } catch (err: any) {
+      console.error("❌ Error creating Amount Deposit:", err);
+      setError(err.message || "Failed to create amount deposit");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  },
+  [program, wallet, hasSufficientBalance, ensureUserTokenAccount]
+);
+
   const topUpDeposit = useCallback(
     async (
       depositPubkey: PublicKey,
       mint: PublicKey,
       vaultTokenAccount: PublicKey,
       additionalAmount: number,
-      decimals: number // 🔹 добавляем decimals
+      decimals: number
     ) => {
       if (!program || !wallet?.publicKey) throw new Error("Wallet not connected");
 
@@ -279,7 +305,7 @@ export function useCreateDeposit() {
         const ownerTokenAccount = await ensureUserTokenAccount(mint, wallet.publicKey);
 
         const tx = await program.methods
-          .withdraw() // <-- метод из твоего smart contract
+          .withdraw()
           .accounts({
             owner: wallet.publicKey,
             deposit: depositPubkey,
@@ -310,7 +336,6 @@ export function useCreateDeposit() {
     [program, wallet, ensureUserTokenAccount]
   );
 
-  /** Валидация Time Deposit */
   const isValidTimeDeposit = useCallback(
     (mint: PublicKey, amount: number, unlockTimestamp: number) => {
       return hasSufficientBalance(mint, amount) && unlockTimestamp > Math.floor(Date.now() / 1000);
@@ -318,14 +343,24 @@ export function useCreateDeposit() {
     [hasSufficientBalance]
   );
 
-  /** Валидация Amount Deposit */
   const isValidAmountDeposit = useCallback(
     (mint: PublicKey, amount: number, unlockAmount: number) => {
-      return hasSufficientBalance(mint, amount) && unlockAmount > 0;
+      const hasBalance = hasSufficientBalance(mint, amount);
+      const isValidAmount = amount > 0 && unlockAmount > 0;
+      const isInitialLessThanTarget = amount < unlockAmount;
+      
+      console.log("🔍 Amount Deposit Validation:", {
+        hasBalance,
+        isValidAmount,
+        isInitialLessThanTarget,
+        amount,
+        unlockAmount
+      });
+      
+      return hasBalance && isValidAmount && isInitialLessThanTarget;
     },
     [hasSufficientBalance]
   );
-
 
   return {
     createTimeDeposit,

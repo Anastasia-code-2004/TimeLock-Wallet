@@ -7,17 +7,23 @@ export const MyDeposits: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="page-container">
-      <button className="back-btn" onClick={() => navigate("/")}>
-        <ArrowLeft className="w-5 h-5" />
-      </button>
-
-      <div className="header-section">
-        <h1 className="page-title">My Deposits</h1>
-        <p className="page-subtitle">View and manage your locked deposits</p>
+    <div className="home-container my-deposits-wrapper">
+      {/* Header с таким же выравниванием как на Create Deposit */}
+      <div className="create-deposit-header-centered">
+        <button 
+          className="back-btn" 
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="header-content-centered">
+          <h1 className="page-title">My Deposits</h1>
+          <p className="page-subtitle">View and manage your locked deposits</p>
+        </div>
       </div>
 
-      <div className="content-section">
+      {/* Контент с депозитами */}
+      <div className="my-deposits-content">
         <DepositList />
       </div>
     </div>

@@ -50,7 +50,7 @@ export const Home: React.FC = () => {
           <div className="actions-grid">
             <button
               className="action-card"
-              onClick={() => setShowCreateDeposit(true)}
+              onClick={() => navigate("/create-deposit")} // ← просто меняем на навигацию
             >
               <div className="action-icon">
                 <DatabaseIcon size={28} />
@@ -83,10 +83,7 @@ export const Home: React.FC = () => {
           </div>
         )}
 
-        {/* Create Deposit Form */}
-        {showCreateDeposit && (
-            <CreateDepositForm onClose={() => setShowCreateDeposit(false)} />
-        )}
+        
       </div>
     </div>
   );

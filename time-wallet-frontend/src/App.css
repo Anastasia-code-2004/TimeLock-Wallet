@@ -260,29 +260,11 @@ html, body {
   }
 }
 
-/* =========================================
-   📄 Page Container (for MyDeposits, CreateDeposit pages)
-   ========================================= */
-.page-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-  padding: 2rem;
-  position: relative;
-}
 
-.page-container::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 20% 30%, rgba(255, 192, 203, 0.35), transparent 60%),
-              radial-gradient(circle at 80% 70%, rgba(186, 133, 255, 0.25), transparent 60%);
-  filter: blur(60px);
-  animation: softFlow 15s ease-in-out infinite alternate;
-  z-index: 0;
-}
+
 
 /* =========================================
-   🔙 Header Section with Back Button
+   🔙 Header Section with Back Button (ОБНОВЛЕННЫЙ)
    ========================================= */
 .header-section {
   position: relative;
@@ -294,30 +276,48 @@ html, body {
   margin-right: auto;
 }
 
-.back-button {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: flex;
+/* ОБНОВЛЕННЫЙ back button - единый стиль для всех страниц */
+.back-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 10px;
-  padding: 0.6rem 1.2rem;
+  padding: 0.6rem;
   color: #5f5f73;
   font-size: 0.95rem;
   transition: all 0.3s ease;
   cursor: pointer;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 15px rgba(150, 150, 200, 0.1);
+  margin-bottom: 1rem;
 }
 
-.back-button:hover {
+.back-btn:hover {
   background: rgba(255, 255, 255, 0.9);
   color: #c471ed;
   transform: translateX(-2px);
   box-shadow: 0 6px 20px rgba(186, 133, 255, 0.2);
+}
+
+/* Новый header для страницы создания депозита */
+.create-deposit-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  text-align: left;
+}
+
+.create-deposit-header .back-btn {
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.header-content {
+  flex: 1;
 }
 
 .page-title {
@@ -350,6 +350,232 @@ html, body {
   backdrop-filter: blur(18px);
   box-shadow: 0 10px 40px rgba(185, 120, 255, 0.15);
   overflow: hidden;
+}
+
+/* Контейнер для формы с увеличенной шириной */
+.create-deposit-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Широкая версия формы депозита */
+.deposit-form-container-wide {
+  width: 100%;
+  max-width: 650px; /* Увеличили с 600px до 650px */
+  margin: 0 auto;
+  padding: 3rem; /* Увеличили padding */
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(220, 220, 220, 0.5);
+  box-shadow: 0 8px 24px rgba(180, 120, 255, 0.1);
+  color: #222;
+  animation: fadeIn 0.4s ease;
+  min-height: 500px; /* Добавили минимальную высоту */
+}
+
+/* Надписи над полями слева */
+.deposit-form-container-wide .deposit-form {
+  width: 100%;
+  text-align: left; /* Все надписи слева */
+}
+
+.deposit-form-container-wide .form-group {
+  margin-bottom: 1.8rem; /* Увеличили отступ между полями */
+}
+
+.deposit-form-container-wide label {
+  font-size: 1rem; /* Увеличили шрифт */
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 0.6rem;
+  text-align: left; /* Надписи слева */
+  display: block;
+}
+
+/* Увеличиваем поля ввода */
+.deposit-form-container-wide input,
+.deposit-form-container-wide select {
+  padding: 1rem 1.2rem; /* Увеличили padding */
+  font-size: 1.05rem; /* Увеличили шрифт */
+  border-radius: 12px;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+
+/* Улучшаем отображение dropdown */
+.deposit-form-container-wide select {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.deposit-form-container-wide select option {
+  padding: 0.8rem;
+  background: #fff;
+  color: #222;
+  font-size: 1rem;
+}
+
+/* Увеличиваем кнопку submit */
+.deposit-form-container-wide .submit-button {
+  padding: 1.2rem; /* Увеличили padding */
+  font-size: 1.15rem; /* Увеличили шрифт */
+  border-radius: 14px;
+  margin-top: 2rem; /* Увеличили отступ сверху */
+  font-weight: 600;
+}
+/* Увеличиваем hint text */
+.deposit-form-container-wide .hint-text {
+  font-size: 0.9rem;
+  color: #777;
+  margin-top: 0.4rem;
+  text-align: left;
+}
+
+/* Увеличиваем error message */
+.deposit-form-container-wide .error-message {
+  margin-top: 1.2rem;
+  color: #ff4f4f;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* =========================================
+   📱 Responsive for Enhanced Form
+   ========================================= */
+@media (max-width: 768px) {
+  .deposit-form-container-wide {
+    max-width: 90%;
+    padding: 2rem;
+    min-height: auto;
+  }
+  
+  .deposit-form-container-wide input,
+  .deposit-form-container-wide select {
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+  }
+  
+  .deposit-form-container-wide .submit-button {
+    padding: 1rem;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .deposit-form-container-wide {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+  
+  .deposit-form-container-wide .form-group {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* =========================================
+   🎯 Create Deposit Page - Centered Header
+   ========================================= */
+
+.create-deposit-wrapper {
+  position: relative;
+}
+
+/* Header с центрированным контентом */
+.create-deposit-header-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 3rem;
+  width: 100%;
+}
+
+/* Стрелка назад абсолютно слева */
+.create-deposit-header-centered .back-btn {
+  position: absolute;
+  left: 10px;
+  top: 0%;
+
+}
+
+/* Контент заголовка по центру */
+.create-deposit-header-centered .header-content-centered {
+  text-align: center;
+  flex: 1;
+  max-width: 600px;
+}
+
+.create-deposit-header-centered .page-title {
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.create-deposit-header-centered .page-subtitle {
+  margin-bottom: 0;
+  text-align: center;
+}
+
+/* =========================================
+   📱 Responsive for Centered Header
+   ========================================= */
+@media (max-width: 768px) {
+  .create-deposit-header-centered {
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .create-deposit-header-centered .back-btn {
+    position: static;
+    transform: none;
+    align-self: flex-start;
+    margin-bottom: 0.5rem;
+  }
+  
+  .create-deposit-header-centered .header-content-centered {
+    width: 100%;
+  }
+}
+
+/* =========================================
+   📱 Responsive Design for Create Deposit
+   ========================================= */
+@media (max-width: 768px) {
+  .create-deposit-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .create-deposit-header .back-btn {
+    align-self: flex-start;
+    margin-top: 0;
+  }
+  
+  .deposit-form-container-wide {
+    padding: 1.5rem;
+    margin: 0 1rem;
+  }
+  
+  .deposit-form-container-wide input,
+  .deposit-form-container-wide select {
+    padding: 0.7rem 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .deposit-form-container-wide {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+  
+  .create-deposit-header {
+    margin-bottom: 2rem;
+  }
 }
 
 /* =========================================
@@ -1139,4 +1365,1203 @@ html, body {
 
 .back-btn:active {
   transform: translateX(0);
+}
+
+/* ВСТАВЬТЕ ЭТОТ БЛОК В КОНЕЦ ВАШЕГО CSS ФАЙЛА */
+
+/* =========================================
+   🏦 My Deposits Page Styling
+   ========================================= */
+
+.my-deposits-wrapper {
+  position: relative;
+}
+
+.my-deposits-content {
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* Контейнер для списка депозитов */
+.deposits-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Заголовок списка депозитов */
+.deposits-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.deposits-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.deposits-count {
+  font-size: 1rem;
+  color: #5f5f73;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+/* Сетка депозитов */
+.deposits-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0 1rem;
+}
+
+/* Состояния загрузки и ошибок */
+.deposits-loading {
+  text-align: center;
+  padding: 3rem;
+  color: #5f5f73;
+}
+
+.deposits-loading .loading-spinner {
+  margin: 0 auto 1rem;
+}
+
+.deposits-error {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.error-text {
+  color: #f64f59;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.retry-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  transform: translateY(-1px);
+}
+
+.deposits-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.empty-text {
+  color: #5f5f73;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-subtext {
+  color: #7a7a8c;
+  font-size: 1rem;
+}
+
+/* =========================================
+   💳 Deposit Card Styling
+   ========================================= */
+
+.deposit-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 32px rgba(150, 150, 200, 0.15);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(220, 220, 255, 0.3);
+}
+
+.deposit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(186, 133, 255, 0.2);
+}
+
+.deposit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.deposit-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 0.5rem;
+}
+
+.deposit-subkey {
+  font-size: 0.85rem;
+  color: #7a7a8c;
+  font-family: monospace;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-active {
+  background: linear-gradient(135deg, #fffbeb, #fed7aa);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-ready {
+  background: linear-gradient(135deg, #f0fdf4, #bbf7d0);
+  color: #166534;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.status-withdrawn {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  color: #475569;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.deposit-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.deposit-info-label {
+  font-size: 0.9rem;
+  color: #5f5f73;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.deposit-info-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.deposit-actions {
+  margin-top: 1.5rem;
+}
+
+.deposit-button {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.deposit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.deposit-button.green {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+.deposit-button.green:hover:not(:disabled) {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.deposit-button.blue {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.deposit-button.blue:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* =========================================
+   💰 Top-up Form Styling
+   ========================================= */
+
+.top-up-form {
+  width: 100%;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.top-up-input-group {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.top-up-input {
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.top-up-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.top-up-currency {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #5f5f73;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.top-up-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.top-up-button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.top-up-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.top-up-button.submit {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.top-up-button.submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+.top-up-button.cancel {
+  background: rgba(255, 255, 255, 0.8);
+  color: #5f5f73;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.top-up-button.cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a2e;
+  transform: translateY(-1px);
+}
+
+/* =========================================
+   📱 Responsive for Deposit Card
+   ========================================= */
+@media (max-width: 768px) {
+  .deposit-card {
+    padding: 1.5rem;
+  }
+  
+  .deposit-info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .deposit-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .status-badge {
+    align-self: flex-start;
+  }
+  
+  .deposit-button {
+    padding: 0.9rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .deposit-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+  
+  .top-up-buttons {
+    flex-direction: column;
+  }
+  
+  .top-up-input {
+    padding: 0.7rem 2.5rem 0.7rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .top-up-currency {
+    right: 0.8rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* =========================================
+   📱 Responsive for My Deposits
+   ========================================= */
+@media (max-width: 768px) {
+  .deposits-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .deposits-title {
+    font-size: 1.5rem;
+  }
+  
+  .deposit-card {
+    padding: 1.5rem;
+  }
+  
+  .deposit-info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .deposit-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .status-badge {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .deposits-grid {
+    padding: 0 0.5rem;
+  }
+  
+  .deposit-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+  
+  .deposit-button {
+    padding: 0.9rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}
+/* =========================================
+   📊 Analytics Page Styling (Consistent with other pages)
+   ========================================= */
+
+.analytics-wrapper {
+  position: relative;
+}
+
+.analytics-content {
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* Готовая к выводу секция */
+.analytics-ready-section {
+  margin-bottom: 2rem;
+}
+
+.analytics-ready-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+  animation: softPulse 4s ease-in-out infinite;
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.analytics-ready-icon {
+  font-size: 3rem;
+  margin-right: 1.5rem;
+  animation: gentlePulse 3s ease-in-out infinite;
+}
+
+.analytics-ready-content {
+  text-align: center;
+  flex: 1;
+}
+
+.analytics-ready-content h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #065f46;
+  margin-bottom: 0.5rem;
+}
+
+.analytics-ready-count {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #059669;
+  margin-bottom: 0.5rem;
+}
+
+.analytics-ready-description {
+  color: #047857;
+  font-size: 1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Более мягкая анимация */
+@keyframes softPulse {
+  0%, 100% { 
+    transform: scale(1); 
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+  }
+  50% { 
+    transform: scale(1.01); 
+    box-shadow: 0 10px 35px rgba(16, 185, 129, 0.2);
+  }
+}
+
+@keyframes gentlePulse {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.05); 
+    opacity: 0.9;
+  }
+}
+
+/* =========================================
+   📱 Responsive for Ready Section
+   ========================================= */
+@media (max-width: 768px) {
+  .analytics-ready-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+    max-width: 100%;
+  }
+  
+  .analytics-ready-icon {
+    margin-right: 0;
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+  }
+  
+  .analytics-ready-count {
+    font-size: 1.75rem;
+  }
+}
+
+/* Сетка статистики */
+.analytics-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(150, 150, 200, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(186, 133, 255, 0.15);
+}
+
+.stat-card h4 {
+  font-size: 0.9rem;
+  color: #5f5f73;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #c471ed;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #7a7a8c;
+}
+
+/* Временной диапазон */
+.analytics-time-range {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(150, 150, 200, 0.1);
+}
+
+.analytics-time-range h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.time-range-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.time-range-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(220, 220, 255, 0.3);
+}
+
+.time-label {
+  font-size: 0.9rem;
+  color: #5f5f73;
+  margin-bottom: 0.5rem;
+}
+
+.time-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+/* Секция с графиком */
+.analytics-chart-section {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(150, 150, 200, 0.1);
+}
+
+.analytics-chart-section h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Сетка токенов */
+.analytics-tokens-section {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(150, 150, 200, 0.1);
+}
+
+.analytics-tokens-section h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.tokens-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.token-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(150, 150, 200, 0.1);
+  transition: all 0.3s ease;
+}
+
+.token-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(186, 133, 255, 0.15);
+}
+
+.token-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(200, 200, 255, 0.3);
+}
+
+.token-header h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+  word-break: break-all;
+}
+
+.token-count {
+  font-size: 0.8rem;
+  color: #7a7a8c;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+}
+
+.token-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.token-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #5f5f73;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  text-align: right;
+}
+
+.token-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.mini-chart {
+  text-align: center;
+}
+
+.mini-chart h5 {
+  font-size: 0.8rem;
+  color: #5f5f73;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+/* =========================================
+   📱 Responsive for Analytics
+   ========================================= */
+@media (max-width: 768px) {
+  .analytics-ready-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  
+  .analytics-ready-icon {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .analytics-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .time-range-bars {
+    grid-template-columns: 1fr;
+  }
+  
+  .tokens-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .token-charts {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-chart-section,
+  .analytics-tokens-section {
+    padding: 1.5rem;
+  }
+  
+  .chart-container {
+    transform: scale(0.9);
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-ready-card {
+    padding: 1.25rem;
+  }
+  
+  .analytics-ready-count {
+    font-size: 1.75rem;
+  }
+  
+  .stat-card {
+    padding: 1.25rem;
+  }
+  
+  .stat-number {
+    font-size: 1.75rem;
+  }
+  
+  .token-card {
+    padding: 1.25rem;
+  }
+  
+  .chart-container {
+    transform: scale(0.8);
+  }
+}
+
+/* =========================================
+   📊 Enhanced Analytics Page Styling - FULL WIDTH TOKENS
+   ========================================= */
+
+/* Детали по токенам - ОДНА КАРТОЧКА НА СТРОКУ */
+.tokens-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.token-card-full {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(150, 150, 200, 0.1);
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.token-card-full:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(186, 133, 255, 0.15);
+}
+
+.token-header-full {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(200, 200, 255, 0.3);
+}
+
+.token-title-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.token-title-section h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+.token-count-badge {
+  background: linear-gradient(135deg, #c471ed, #f64f59);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.token-content-full {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: start;
+}
+
+.token-stats-full {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.token-stat-full {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(220, 220, 255, 0.3);
+}
+
+.stat-label-full {
+  font-size: 0.85rem;
+  color: #5f5f73;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value-full {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.stat-value-full.remaining-value {
+  color: #f64f59;
+}
+
+.token-charts-full {
+  display: flex;
+  gap: 1.5rem;
+  min-width: 320px;
+  justify-content: flex-end;
+}
+
+.mini-chart-full {
+  text-align: center;
+  min-width: 140px;
+}
+
+.mini-chart-full h5 {
+  font-size: 0.9rem;
+  color: #5f5f73;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+/* =========================================
+   📱 Responsive for Full Width Tokens
+   ========================================= */
+@media (max-width: 768px) {
+  .token-content-full {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .token-charts-full {
+    justify-content: center;
+    min-width: auto;
+  }
+  
+  .token-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .token-header-full {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .token-charts-full {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .token-card-full {
+    padding: 1.5rem;
+  }
+  
+  .token-charts-full {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .mini-chart-full {
+    min-width: auto;
+  }
+}
+
+/* =========================================
+   📊 Analytics Tokens Wrapper
+   ========================================= */
+
+.analytics-tokens-wrapper {
+  margin-top: 2rem;
+}
+
+.tokens-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.tokens-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #c471ed 0%, #f64f59 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tokens-subtitle {
+  font-size: 1rem;
+  color: #5f5f73;
+  font-weight: 400;
+}
+
+/* Детали по токенам - ОДНА КАРТОЧКА НА СТРОКУ */
+.tokens-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.token-card-full {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(150, 150, 200, 0.1);
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.token-card-full:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(186, 133, 255, 0.15);
+}
+
+.token-header-full {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(200, 200, 255, 0.3);
+}
+
+.token-title-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.token-title-section h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+.token-count-badge {
+  background: linear-gradient(135deg, #c471ed, #f64f59);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.token-content-full {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: start;
+}
+
+.token-stats-full {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.token-stat-full {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(220, 220, 255, 0.3);
+}
+
+.stat-label-full {
+  font-size: 0.85rem;
+  color: #5f5f73;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value-full {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.stat-value-full.remaining-value {
+  color: #f64f59;
+}
+
+.token-charts-full {
+  display: flex;
+  gap: 1.5rem;
+  min-width: 320px;
+  justify-content: flex-end;
+}
+
+.mini-chart-full {
+  text-align: center;
+  min-width: 140px;
+}
+
+.mini-chart-full h5 {
+  font-size: 0.9rem;
+  color: #5f5f73;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+/* =========================================
+   📱 Responsive for Full Width Tokens
+   ========================================= */
+@media (max-width: 768px) {
+  .token-content-full {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .token-charts-full {
+    justify-content: center;
+    min-width: auto;
+  }
+  
+  .token-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .token-header-full {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .token-charts-full {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .token-card-full {
+    padding: 1.5rem;
+  }
+  
+  .token-charts-full {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .mini-chart-full {
+    min-width: auto;
+  }
 }

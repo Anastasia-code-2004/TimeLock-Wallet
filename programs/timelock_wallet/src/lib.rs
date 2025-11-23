@@ -1,18 +1,18 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 
-//declare_id!("3bL1e2w6nr2pg5RrPxdSAYw7bM9yFJ2mxW91Zrma62aF");
-declare_id!("DDQBPrEG2Jwryji26VBYZxzXHtUvS8kBqucGS86MoqJU");
+declare_id!("E2FjoMuTVmetM3MpM7QHYtDS43e9QXSegVZxn8u34pzK");
 
 #[program]
 pub mod timelock_wallet {
     use super::*;
 
-    /// Инициализация депозита по времени (как было)
+    /// Инициализация депозита по времени
     pub fn initialize_deposit(
         ctx: Context<InitializeDeposit>,
         amount: u64,
         unlock_timestamp: i64,
+        counter: u32, // ← УБРАЛИ ПОДЧЕРКИВАНИЕ
     ) -> Result<()> {
         require!(amount > 0, ErrorCode::InvalidAmount);
         let current_timestamp = Clock::get()?.unix_timestamp;
@@ -31,8 +31,8 @@ pub mod timelock_wallet {
             unlock_amount: 0,
             condition_type: ConditionType::ByTime,
         };
-        // сохраняем seed (8 байт) для PDA-совместимости
         deposit.lock_seed = unlock_timestamp.to_le_bytes();
+        deposit.counter = counter; // ← СОХРАНЯЕМ COUNTER
         deposit.state = DepositState::Active;
         deposit.created_at = current_timestamp;
         deposit.bump = ctx.bumps.deposit;
@@ -58,11 +58,12 @@ pub mod timelock_wallet {
         Ok(())
     }
 
-    /// Новая инициализация депозита: разблокировка по достижению суммы
+    /// Инициализация депозита по сумме
     pub fn initialize_deposit_by_amount(
         ctx: Context<InitializeDepositByAmount>,
         amount: u64,
         unlock_amount: u64,
+        counter: u32, // ← УБРАЛИ ПОДЧЕРКИВАНИЕ
     ) -> Result<()> {
         require!(amount > 0, ErrorCode::InvalidAmount);
         require!(unlock_amount > 0, ErrorCode::InvalidAmount);
@@ -79,8 +80,8 @@ pub mod timelock_wallet {
             unlock_amount,
             condition_type: ConditionType::ByAmount,
         };
-        // сохраняем seed (8 байт) — используем unlock_amount.to_le_bytes()
         deposit.lock_seed = unlock_amount.to_le_bytes();
+        deposit.counter = counter; // ← СОХРАНЯЕМ COUNTER
         deposit.state = DepositState::Active;
         deposit.created_at = current_timestamp;
         deposit.bump = ctx.bumps.deposit;
@@ -96,7 +97,6 @@ pub mod timelock_wallet {
         );
         token::transfer(cpi_ctx, amount)?;
 
-        // Для события используем поле unlock_amount, записываем его в поле unlock_timestamp=0
         emit!(DepositCreatedByAmount {
             owner: deposit.owner,
             amount,
@@ -121,14 +121,11 @@ pub mod timelock_wallet {
             ErrorCode::Unauthorized
         );
 
-        // Увеличиваем сумму депозита
-        // Проверку на переполнение делаем явно
         let new_amount = ctx.accounts.deposit.amount
             .checked_add(additional_amount)
             .ok_or(ErrorCode::Overflow)?;
         ctx.accounts.deposit.amount = new_amount;
 
-        // Переводим дополнительные токены в vault
         let transfer_instruction = Transfer {
             from: ctx.accounts.owner_token_account.to_account_info(),
             to: ctx.accounts.vault_token_account.to_account_info(),
@@ -162,7 +159,6 @@ pub mod timelock_wallet {
 
         let current_timestamp = Clock::get()?.unix_timestamp;
 
-        // Проверка условия разблокировки в зависимости от типа
         match ctx.accounts.deposit.lock_condition.condition_type {
             ConditionType::ByTime => {
                 require!(
@@ -171,7 +167,6 @@ pub mod timelock_wallet {
                 );
             }
             ConditionType::ByAmount => {
-                // разблокировка по сумме: если накопленная сумма депозита >= требуемой
                 require!(
                     ctx.accounts.deposit.amount >= ctx.accounts.deposit.lock_condition.unlock_amount,
                     ErrorCode::ConditionsNotMet
@@ -179,15 +174,16 @@ pub mod timelock_wallet {
             }
         }
 
-        // Сохраняем значения перед изменением
         let owner = ctx.accounts.deposit.owner;
         let amount = ctx.accounts.deposit.amount;
         let mint = ctx.accounts.deposit.mint;
 
+        // ОБНОВЛЕННЫЕ SEEDS С COUNTER
         let seeds = &[
             b"deposit",
             ctx.accounts.deposit.owner.as_ref(),
-            &ctx.accounts.deposit.lock_seed,
+            &ctx.accounts.deposit.lock_seed[..],
+            &ctx.accounts.deposit.counter.to_le_bytes(), // ← ДОБАВИЛИ COUNTER
             &[ctx.accounts.deposit.bump],
         ];
         let signer_seeds = &[&seeds[..]];
@@ -204,7 +200,6 @@ pub mod timelock_wallet {
         );
         token::transfer(cpi_ctx, amount)?;
 
-        // После успешного вывода обнуляем сумму и ставим статус Withdrawn
         ctx.accounts.deposit.amount = 0;
         ctx.accounts.deposit.state = DepositState::Withdrawn;
 
@@ -219,12 +214,6 @@ pub mod timelock_wallet {
     }
 }
 
-//
-// ────────────────────────────────────────────────
-//   СТРУКТУРЫ И КОНТЕКСТЫ
-// ────────────────────────────────────────────────
-//
-
 #[account]
 #[derive(InitSpace)]
 pub struct TimeLockDeposit {
@@ -233,23 +222,20 @@ pub struct TimeLockDeposit {
     pub vault_token_account: Pubkey,
     pub amount: u64,
     pub lock_condition: LockCondition,
-    pub lock_seed: [u8; 8], // UNIFIED seed (timestamp or amount bytes)
+    pub lock_seed: [u8; 8],
+    pub counter: u32, // ← ДОБАВИЛИ ПОЛЕ COUNTER
     pub state: DepositState,
     pub created_at: i64,
     pub bump: u8,
 }
 
-/// Условие блокировки (включает оба варианта)
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct LockCondition {
-    // Используется, если condition_type == ByTime
     pub unlock_timestamp: i64,
-    // Используется, если condition_type == ByAmount
     pub unlock_amount: u64,
     pub condition_type: ConditionType,
 }
 
-/// Тип условия (ByTime или ByAmount)
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub enum ConditionType {
     ByTime,
@@ -264,7 +250,7 @@ pub enum DepositState {
 
 /// Контекст создания депозита по времени
 #[derive(Accounts)]
-#[instruction(amount: u64, unlock_timestamp: i64)]
+#[instruction(amount: u64, unlock_timestamp: i64, counter: u32)]
 pub struct InitializeDeposit<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
@@ -276,7 +262,8 @@ pub struct InitializeDeposit<'info> {
         seeds = [
             b"deposit",
             owner.key().as_ref(),
-            &unlock_timestamp.to_le_bytes()
+            &unlock_timestamp.to_le_bytes(),
+            &counter.to_le_bytes() 
         ],
         bump
     )]
@@ -308,7 +295,7 @@ pub struct InitializeDeposit<'info> {
 
 /// Контекст создания депозита по сумме
 #[derive(Accounts)]
-#[instruction(amount: u64, unlock_amount: u64)]
+#[instruction(amount: u64, unlock_amount: u64, counter: u32)]
 pub struct InitializeDepositByAmount<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
@@ -320,7 +307,8 @@ pub struct InitializeDepositByAmount<'info> {
         seeds = [
             b"deposit",
             owner.key().as_ref(),
-            &unlock_amount.to_le_bytes()
+            &unlock_amount.to_le_bytes(),
+            &counter.to_le_bytes()
         ],
         bump
     )]
@@ -350,7 +338,6 @@ pub struct InitializeDepositByAmount<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-/// Контекст докидывания токенов
 #[derive(Accounts)]
 pub struct AddFunds<'info> {
     #[account(mut)]
@@ -361,7 +348,8 @@ pub struct AddFunds<'info> {
         seeds = [
             b"deposit",
             deposit.owner.as_ref(),
-            &deposit.lock_seed
+            &deposit.lock_seed[..8],
+            &deposit.counter.to_le_bytes() // ← ДОБАВИЛИ COUNTER
         ],
         bump = deposit.bump
     )]
@@ -386,7 +374,6 @@ pub struct AddFunds<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-/// Контекст вывода
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
     #[account(mut)]
@@ -395,7 +382,12 @@ pub struct Withdraw<'info> {
     #[account(
         mut,
         close = owner,
-        seeds = [b"deposit", deposit.owner.as_ref(), &deposit.lock_seed],
+        seeds = [
+            b"deposit",
+            deposit.owner.as_ref(),
+            &deposit.lock_seed[..8],
+            &deposit.counter.to_le_bytes() // ← ДОБАВИЛИ COUNTER
+        ],
         bump = deposit.bump
     )]
     pub deposit: Account<'info, TimeLockDeposit>,
@@ -416,12 +408,6 @@ pub struct Withdraw<'info> {
 
     pub token_program: Program<'info, Token>,
 }
-
-//
-// ────────────────────────────────────────────────
-//   СОБЫТИЯ (TransactionRecord)
-// ────────────────────────────────────────────────
-//
 
 #[event]
 pub struct DepositCreated {
@@ -454,12 +440,6 @@ pub struct DepositWithdrawn {
     pub token: Pubkey,
     pub time: i64,
 }
-
-//
-// ────────────────────────────────────────────────
-//   ОШИБКИ
-// ────────────────────────────────────────────────
-//
 
 #[error_code]
 pub enum ErrorCode {

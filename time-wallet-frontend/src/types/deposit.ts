@@ -8,6 +8,7 @@ export interface Deposit {
   lockCondition: LockCondition;
   createdAt: number;
   vault_token_account: string;
+  counter?: number; // ← ДОБАВИЛИ COUNTER
 }
 
 export interface LockCondition {

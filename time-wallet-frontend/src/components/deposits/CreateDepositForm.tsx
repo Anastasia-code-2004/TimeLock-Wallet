@@ -74,6 +74,11 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
           selectedTokenInfo.decimals
         );
 
+        if (amountInMinimalUnits >= unlockAmountInMinimalUnits) {
+        alert("❌ Initial deposit must be LESS than target amount for amount-based locks");
+        return;
+      }
+
         if (
           !isValidAmountDeposit(
             selectedTokenInfo.mint,
@@ -92,7 +97,7 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
         });
       }
 
-      alert("✅ Deposit created successfully!");
+     
       setAmount("");
       setUnlockValue("");
       onClose();
@@ -102,14 +107,7 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
   };
 
   return (
-    <div className="deposit-form-container">
-      <div className="deposit-form-header">
-        <h2>Create Deposit</h2>
-        <button className="deposit-close-button" onClick={onClose}>
-          <TimesIcon />
-        </button>
-      </div>
-
+    <div className="deposit-form-container-wide">
       <form onSubmit={handleSubmit} className="deposit-form">
         <div className="form-group">
           <label>Deposit Type</label>
@@ -125,16 +123,19 @@ export const CreateDepositForm: React.FC<CreateDepositFormProps> = ({ onClose })
         <div className="form-group">
           <label>Token</label>
           <select value={selectedToken} onChange={(e) => setSelectedToken(e.target.value)}>
-            <option value="">Select Token</option>
-            {userTokens.map((token) => (
-              <option key={token.mint.toBase58()} value={token.mint.toBase58()}>
-                {token.symbol} — Balance:{" "}
-                {fromMinimalUnits
-                  ? fromMinimalUnits(token.balance, token.decimals)
-                  : token.balance}
-              </option>
-            ))}
-          </select>
+  <option value="">Select Token</option>
+  {userTokens
+    .filter(token => 
+      !token.isNative && 
+      token.mint.toBase58() !== 'So11111111111111111111111111111111111111112'
+    )
+    .map((token) => (
+      <option key={token.mint.toBase58()} value={token.mint.toBase58()}>
+        {token.symbol} — Balance: {fromMinimalUnits(token.balance, token.decimals)}
+      </option>
+    ))
+  }
+</select>
         </div>
 
         <div className="form-group">

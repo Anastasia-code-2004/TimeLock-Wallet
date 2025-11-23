@@ -1,5 +1,5 @@
 {
-  "address": "CPPQFeBovJRCeLQ1Kh7HAX9qQMszh42XMBMpHMrrXBkD",
+  "address": "E2FjoMuTVmetM3MpM7QHYtDS43e9QXSegVZxn8u34pzK",
   "metadata": {
     "name": "timelock_wallet",
     "version": "0.1.0",
@@ -55,7 +55,7 @@
     {
       "name": "initialize_deposit",
       "docs": [
-        "Инициализация депозита по времени (как было)"
+        "Инициализация депозита по времени"
       ],
       "discriminator": [
         171,
@@ -97,6 +97,10 @@
               {
                 "kind": "arg",
                 "path": "unlock_timestamp"
+              },
+              {
+                "kind": "arg",
+                "path": "counter"
               }
             ]
           }
@@ -151,13 +155,17 @@
         {
           "name": "unlock_timestamp",
           "type": "i64"
+        },
+        {
+          "name": "counter",
+          "type": "u32"
         }
       ]
     },
     {
       "name": "initialize_deposit_by_amount",
       "docs": [
-        "Новая инициализация депозита: разблокировка по достижению суммы"
+        "Инициализация депозита по сумме"
       ],
       "discriminator": [
         32,
@@ -199,6 +207,10 @@
               {
                 "kind": "arg",
                 "path": "unlock_amount"
+              },
+              {
+                "kind": "arg",
+                "path": "counter"
               }
             ]
           }
@@ -253,6 +265,10 @@
         {
           "name": "unlock_amount",
           "type": "u64"
+        },
+        {
+          "name": "counter",
+          "type": "u32"
         }
       ]
     },
@@ -398,9 +414,6 @@
   "types": [
     {
       "name": "ConditionType",
-      "docs": [
-        "Тип условия (ByTime или ByAmount)"
-      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -525,9 +538,6 @@
     },
     {
       "name": "LockCondition",
-      "docs": [
-        "Условие блокировки (включает оба варианта)"
-      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -587,6 +597,10 @@
                 8
               ]
             }
+          },
+          {
+            "name": "counter",
+            "type": "u32"
           },
           {
             "name": "state",

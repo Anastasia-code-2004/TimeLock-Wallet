@@ -86,6 +86,12 @@ function computeAnalytics(deposits: Deposit[]): AnalyticsStats {
   return stats;
 }
 
+// Функция для сокращения адреса токена
+function shortenTokenAddress(address: string): string {
+  if (address.length <= 12) return address;
+  return `${address.slice(0, 6)}...${address.slice(-6)}`;
+}
+
 export const Analytics: React.FC = () => {
   const navigate = useNavigate();
   const { deposits } = useDeposits();
@@ -94,151 +100,235 @@ export const Analytics: React.FC = () => {
   const formatAmount = (amount: number) => (amount / 1_000_000).toFixed(2);
 
   const pieDataCount = Object.entries(stats.depositsCountByToken).map(
-    ([mint, count]) => ({ name: mint, value: count })
+    ([mint, count]) => ({ 
+      name: shortenTokenAddress(mint), 
+      value: count,
+      fullName: mint 
+    })
   );
 
   return (
-    <div className="analytics-container">
-      
-      <button className="back-btn" onClick={() => navigate("/")}>
-        <ArrowLeft className="w-5 h-5" />
-      </button>
-
-      <h1>Analytics</h1>
-
-      <div className="analytics-ready">
-        💰 Ready to withdraw: <span>{stats.depositsReadyToWithdraw}</span> pcs
+    <div className="home-container analytics-wrapper">
+      {/* Header с таким же выравниванием как на других страницах */}
+      <div className="create-deposit-header-centered">
+        <button 
+          className="back-btn" 
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="header-content-centered">
+          <h1 className="page-title">Analytics</h1>
+          <p className="page-subtitle">Detailed insights about your deposits</p>
+        </div>
       </div>
 
-      <div className="analytics-summary">
-        <p>
-          <strong>Total deposits:</strong> {stats.totalDeposits} pcs
-        </p>
-        <p>
-          <strong>By type (overall):</strong> Time = {stats.depositsByType.byTime} pcs,{" "}
-          Amount = {stats.depositsByType.byAmount} pcs
-        </p>
-        {stats.earliestUnlock !== null && stats.latestUnlock !== null && (
-          <p>
-            <strong>Unlock range (ByTime):</strong>{" "}
-            {formatDuration(Math.max(stats.earliestUnlock - now, 0))} →{" "}
-            {formatDuration(Math.max(stats.latestUnlock - now, 0))}
-          </p>
-        )}
-      </div>
-
-      {pieDataCount.length > 0 && (
-        <div className="analytics-section">
-          <h2>Deposits count by Token (pcs)</h2>
-          <div className="analytics-chart">
-            <PieChart width={400} height={300}>
-              <Pie
-                data={pieDataCount}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label={false}
-              >
-                {pieDataCount.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
+      {/* Контент аналитики */}
+      <div className="analytics-content">
+        
+        {/* Статистика готовая к выводу */}
+        <div className="analytics-ready-section">
+          <div className="analytics-ready-card">
+            <div className="analytics-ready-icon">💰</div>
+            <div className="analytics-ready-content">
+              <h3>Ready to Withdraw</h3>
+              <p className="analytics-ready-count">{stats.depositsReadyToWithdraw} deposits</p>
+              <p className="analytics-ready-description">
+                Deposits that have met their unlock conditions
+              </p>
+            </div>
           </div>
         </div>
-      )}
 
-      <div className="analytics-section">
-        <h2>Per Token Details</h2>
+        {/* Основная статистика */}
+        <div className="analytics-stats-grid">
+          <div className="stat-card">
+            <h4>Total Deposits</h4>
+            <p className="stat-number">{stats.totalDeposits}</p>
+            <p className="stat-label">across all tokens</p>
+          </div>
+          
+          <div className="stat-card">
+            <h4>By Time</h4>
+            <p className="stat-number">{stats.depositsByType.byTime}</p>
+            <p className="stat-label">time-locked deposits</p>
+          </div>
+          
+          <div className="stat-card">
+            <h4>By Amount</h4>
+            <p className="stat-number">{stats.depositsByType.byAmount}</p>
+            <p className="stat-label">amount-target deposits</p>
+          </div>
+        </div>
 
-        {Object.keys(stats.totalByToken)
-          .filter((mint) => stats.totalByToken[mint] > 0)
-          .map((mint) => {
-            const total = stats.totalByToken[mint];
-            const remaining = stats.remainingByToken[mint] ?? 0;
-            const t = stats.depositsTypeByToken[mint];
-
-            const pieDataRemaining = [
-              { name: "Deposited", value: parseFloat(formatAmount(total - remaining)) },
-              { name: "Remaining", value: parseFloat(formatAmount(remaining)) },
-            ];
-
-            const pieDataTypeAmount = [
-              { name: "By Time", value: parseFloat(formatAmount(t.amountByTime)) },
-              { name: "By Amount", value: parseFloat(formatAmount(t.amountByAmount)) },
-            ];
-
-            return (
-              <div className="analytics-token" key={mint}>
-                <h3>{mint}</h3>
-                <p>
-                  <strong>Total deposited:</strong> {formatAmount(total)} TKN
-                </p>
-                <ul>
-                  <li>By Time: {formatAmount(t.amountByTime)} TKN</li>
-                  <li>By Amount: {formatAmount(t.amountByAmount)} TKN</li>
-                </ul>
-                <p>
-                  <strong>Remaining (ByAmount):</strong> {formatAmount(remaining)} TKN
-                </p>
-                <p>
-                  <strong>By type (count):</strong> Time = {t.byTime} pcs, Amount ={" "}
-                  {t.byAmount} pcs
-                </p>
-
-                <div className="analytics-duo-charts">
-                  {t.byAmount > 0 && remaining > 0 && (
-                    <div>
-                      <h4 className="analytics-label">ByAmount Deposits</h4>
-                      <PieChart width={220} height={180}>
-                        <Pie
-                          data={pieDataRemaining}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={70}
-                          label
-                        >
-                          {pieDataRemaining.map((_, j) => (
-                            <Cell key={j} fill={COLORS[j % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </div>
-                  )}
-
-                  {(t.amountByTime > 0 || t.amountByAmount > 0) && (
-                    <div>
-                      <h4 className="analytics-label">Deposit Type Distribution</h4>
-                      <PieChart width={220} height={180}>
-                        <Pie
-                          data={pieDataTypeAmount}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={70}
-                          label
-                        >
-                          {pieDataTypeAmount.map((_, j) => (
-                            <Cell key={j} fill={COLORS[(j + 2) % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </div>
-                  )}
-                </div>
+        {/* Временной диапазон */}
+        {stats.earliestUnlock !== null && stats.latestUnlock !== null && (
+          <div className="analytics-time-range">
+            <h3>Unlock Time Range</h3>
+            <div className="time-range-bars">
+              <div className="time-range-item">
+                <span className="time-label">Earliest</span>
+                <span className="time-value">
+                  {formatDuration(Math.max(stats.earliestUnlock - now, 0))}
+                </span>
               </div>
-            );
-          })}
-      </div>
+              <div className="time-range-item">
+                <span className="time-label">Latest</span>
+                <span className="time-value">
+                  {formatDuration(Math.max(stats.latestUnlock - now, 0))}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* График распределения по токенам */}
+        {pieDataCount.length > 0 && (
+          <div className="analytics-chart-section">
+            <h3>Deposits Distribution by Token</h3>
+            <div className="chart-container">
+              <PieChart width={400} height={300}>
+                <Pie
+                  data={pieDataCount}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  label={false}
+                >
+                  {pieDataCount.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value, name, props) => {
+                    const fullName = props.payload.fullName;
+                    return [`${value} deposits`, fullName];
+                  }}
+                />
+                <Legend />
+              </PieChart>
+            </div>
+          </div>
+        )}
+        {/* Детали по каждому токену - ОДНА КАРТОЧКА НА СТРОКУ */}
+<div className="analytics-tokens-wrapper">
+  <div className="tokens-header">
+    <h3>Token Details</h3>
+    <p className="tokens-subtitle">Detailed breakdown for each token</p>
+  </div>
+  
+  <div className="tokens-list">
+    {Object.keys(stats.totalByToken)
+      .filter((mint) => stats.totalByToken[mint] > 0)
+      .map((mint) => {
+        const total = stats.totalByToken[mint];
+        const remaining = stats.remainingByToken[mint] ?? 0;
+        const t = stats.depositsTypeByToken[mint];
+        const depositCount = stats.depositsCountByToken[mint];
+
+        const pieDataRemaining = [
+          { name: "Deposited", value: parseFloat(formatAmount(total - remaining)) },
+          { name: "Remaining", value: parseFloat(formatAmount(remaining)) },
+        ];
+
+        const pieDataTypeAmount = [
+          { name: "By Time", value: parseFloat(formatAmount(t.amountByTime)) },
+          { name: "By Amount", value: parseFloat(formatAmount(t.amountByAmount)) },
+        ];
+
+        return (
+          <div className="token-card-full" key={mint}>
+            <div className="token-header-full">
+              <div className="token-title-section">
+                <h4 title={mint}>{shortenTokenAddress(mint)}</h4>
+                <span className="token-count-badge">{depositCount} deposit{depositCount !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+            
+            <div className="token-content-full">
+              <div className="token-stats-full">
+                <div className="token-stat-full">
+                  <span className="stat-label-full">Total Value</span>
+                  <span className="stat-value-full">{formatAmount(total)} TKN</span>
+                </div>
+                
+                <div className="token-stat-full">
+                  <span className="stat-label-full">By Time</span>
+                  <span className="stat-value-full">
+                    {t.byTime} deposit{t.byTime !== 1 ? 's' : ''} · {formatAmount(t.amountByTime)} TKN
+                  </span>
+                </div>
+                
+                <div className="token-stat-full">
+                  <span className="stat-label-full">By Amount</span>
+                  <span className="stat-value-full">
+                    {t.byAmount} deposit{t.byAmount !== 1 ? 's' : ''} · {formatAmount(t.amountByAmount)} TKN
+                  </span>
+                </div>
+                
+                {remaining > 0 && (
+                  <div className="token-stat-full">
+                    <span className="stat-label-full">Remaining to Unlock</span>
+                    <span className="stat-value-full remaining-value">{formatAmount(remaining)} TKN</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Мини-графики для токена */}
+              <div className="token-charts-full">
+                {t.byAmount > 0 && remaining > 0 && (
+                  <div className="mini-chart-full">
+                    <h5>ByAmount Progress</h5>
+                    <PieChart width={140} height={140}>
+                      <Pie
+                        data={pieDataRemaining}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={50}
+                        label={false}
+                      >
+                        {pieDataRemaining.map((_, j) => (
+                          <Cell key={j} fill={COLORS[j % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </div>
+                )}
+
+                {(t.amountByTime > 0 || t.amountByAmount > 0) && (
+                  <div className="mini-chart-full">
+                    <h5>Type Distribution</h5>
+                    <PieChart width={140} height={140}>
+                      <Pie
+                        data={pieDataTypeAmount}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={50}
+                        label={false}
+                      >
+                        {pieDataTypeAmount.map((_, j) => (
+                          <Cell key={j} fill={COLORS[(j + 2) % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+  </div>
+</div>
+        </div>
     </div>
   );
 };

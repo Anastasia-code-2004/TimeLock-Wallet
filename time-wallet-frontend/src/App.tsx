@@ -9,7 +9,7 @@ import { clusterApiUrl } from '@solana/web3.js';
 import { Home } from "./pages/Home";
 import { MyDeposits } from "./pages/MyDeposits";
 import { Analytics } from "./pages/Analytics";
-// import { CreateDeposit } from "./pages/CreateDeposit";
+import { CreateDeposit } from "./pages/CreateDeposit";
 // import { Analytics } from "./pages/Analytics";
 
 // Styles
@@ -31,8 +31,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/my-deposits" element={<MyDeposits />} />
                 <Route path="/analytics" element={<Analytics />} />
-                {/* <Route path="/create-deposit" element={<CreateDeposit />} /> */}
-                {/* <Route path="/analytics" element={<Analytics />} /> */}
+                <Route path="/create-deposit" element={<CreateDeposit />} />
               </Routes>
             </div>
           </Router>

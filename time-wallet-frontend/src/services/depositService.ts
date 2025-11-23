@@ -102,15 +102,28 @@ export const depositService = {
           console.warn("⚠ Error parsing amount:", decoded.amount, e);
         }
 
+        // ───── Counter ─────
+        let counterValue = 0;
+        try {
+          if (decoded.counter !== undefined && decoded.counter !== null) {
+            if (typeof decoded.counter === "object" && "toNumber" in decoded.counter)
+              counterValue = decoded.counter.toNumber();
+            else counterValue = Number(decoded.counter);
+          }
+        } catch (e) {
+          console.warn("⚠ Error parsing counter:", decoded.counter, e);
+        }
+
         const deposit: Deposit = {
-        pubkey: acc.pubkey,
-        amount: amountValue,
-        mint: new PublicKey(decoded.mint).toBase58(),
-        state,
-        lockCondition,
-        createdAt: decoded.createdAt,
-        vault_token_account: vaultTokenAccountStr,
-      };
+          pubkey: acc.pubkey,
+          amount: amountValue,
+          mint: new PublicKey(decoded.mint).toBase58(),
+          state,
+          lockCondition,
+          createdAt: decoded.createdAt,
+          vault_token_account: vaultTokenAccountStr,
+          counter: counterValue, // ← ДОБАВИЛИ COUNTER
+        };
 
         formatted.push(deposit);
       } catch (err) {

@@ -10,6 +10,8 @@ interface DepositCardProps {
 
 export const DepositCard: React.FC<DepositCardProps> = ({ deposit, onWithdraw, onTopUp }) => {
   const [loading, setLoading] = useState(false);
+  const [showTopUpForm, setShowTopUpForm] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
 
   const canWithdraw = (): boolean => {
     if (deposit.state === "Withdrawn") return false;
@@ -42,17 +44,33 @@ export const DepositCard: React.FC<DepositCardProps> = ({ deposit, onWithdraw, o
     }
   };
 
-  const handleTopUp = async () => {
-    const amountStr = prompt("Enter amount to top-up:");
-    if (!amountStr) return;
-    const amount = Number(amountStr);
-    if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
+  const handleTopUpClick = () => {
+    setShowTopUpForm(true);
+    setTopUpAmount("");
+  };
+
+  const handleTopUpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const amount = Number(topUpAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+
     setLoading(true);
     try {
       await onTopUp(deposit, amount);
+      setShowTopUpForm(false);
+      setTopUpAmount("");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelTopUp = () => {
+    setShowTopUpForm(false);
+    setTopUpAmount("");
   };
 
   return (
@@ -113,13 +131,51 @@ export const DepositCard: React.FC<DepositCardProps> = ({ deposit, onWithdraw, o
             {loading ? "Processing..." : "Withdraw Funds"}
           </button>
         ) : (
-          <button
-            disabled={loading}
-            onClick={handleTopUp}
-            className="deposit-button blue"
-          >
-            {loading ? "Processing..." : "Top-up Deposit"}
-          </button>
+          <>
+            {!showTopUpForm ? (
+              <button
+                disabled={loading}
+                onClick={handleTopUpClick}
+                className="deposit-button blue"
+              >
+                {loading ? "Processing..." : "Top-up Deposit"}
+              </button>
+            ) : (
+              <form onSubmit={handleTopUpSubmit} className="top-up-form">
+                <div className="top-up-input-group">
+                  <input
+                    type="number"
+                    value={topUpAmount}
+                    onChange={(e) => setTopUpAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className="top-up-input"
+                    step="0.01"
+                    min="0.01"
+                    required
+                    autoFocus
+                  />
+                  <span className="top-up-currency">{getTokenSymbol(deposit.mint)}</span>
+                </div>
+                <div className="top-up-buttons">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="top-up-button submit"
+                  >
+                    {loading ? "Adding..." : "Add Funds"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelTopUp}
+                    disabled={loading}
+                    className="top-up-button cancel"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </>
         )}
       </div>
     </div>
