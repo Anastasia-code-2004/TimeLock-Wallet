@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 
-declare_id!("E2FjoMuTVmetM3MpM7QHYtDS43e9QXSegVZxn8u34pzK");
+declare_id!("6oB3tWykpdeaRLbDeL4W1Hr386NFfxbeBPe99eTPxxzL");
 
 #[program]
 pub mod timelock_wallet {

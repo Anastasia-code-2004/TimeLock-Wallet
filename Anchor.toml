@@ -5,18 +5,15 @@ package_manager = "yarn"
 resolution = true
 skip-lint = false
 
-# ДОБАВЬ СЕКЦИЮ ДЛЯ DEVNET:
 [programs.devnet]
-timelock_wallet = "E2FjoMuTVmetM3MpM7QHYtDS43e9QXSegVZxn8u34pzK"
+timelock_wallet = "6oB3tWykpdeaRLbDeL4W1Hr386NFfxbeBPe99eTPxxzL"
 
-# ОСТАВЬ localnet для тестов:
 [programs.localnet]
 timelock_wallet = "3bL1e2w6nr2pg5RrPxdSAYw7bM9yFJ2mxW91Zrma62aF"
 
 [registry]
 url = "https://api.apr.dev"
 
-# ИЗМЕНИ cluster на devnet:
 [provider]
 cluster = "devnet"
 wallet = "~/.config/solana/id.json"
